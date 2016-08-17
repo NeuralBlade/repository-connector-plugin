@@ -18,7 +18,16 @@
     <f:entry title="${%ArtifactId}">
         <f:textbox field="artifactid" value="${instance.artifactid}" />
     </f:entry>
+  
     <f:entry title="${%Description}">
         <f:textarea field="description" value="${instance.description}" />
     </f:entry>
+    
+    <f:entry title="${%ShowDefaults}">
+        <f:checkbox field="showDefaults" value="${instance.showDefaults}" />
+    </f:entry>  
+    <f:entry title="${%OnlyReleasedVersions}">
+        <f:checkbox field="onlyReleasedVersions" value="${instance.onlyReleasedVersions}" />
+    </f:entry>          
+
 </j:jelly>

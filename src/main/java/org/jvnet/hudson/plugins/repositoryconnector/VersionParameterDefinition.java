@@ -38,15 +38,19 @@ public class VersionParameterDefinition extends
     private final String repoid;
     private final String artifactid;
     private final String propertyName;
-
+    private final boolean showDefaults;
+    private final boolean onlyReleasedVersions;
+    
     @DataBoundConstructor
     public VersionParameterDefinition(String repoid, String groupid,
-            String artifactid, String propertyName, String description) {
+            String artifactid, String propertyName, String description, boolean showDefaults, boolean onlyReleasedVersions) {
         super(groupid + "." + artifactid, description);
         this.repoid = repoid;
         this.groupid = groupid;
         this.artifactid = artifactid;
         this.propertyName = propertyName;
+        this.showDefaults = showDefaults;
+        this.onlyReleasedVersions = onlyReleasedVersions;
     }
 
     @Override
@@ -54,7 +58,7 @@ public class VersionParameterDefinition extends
         if (defaultValue instanceof StringParameterValue) {
             // TODO: StringParameterValue value = (StringParameterValue) defaultValue;
             return new VersionParameterDefinition(getRepoid(), "",
-                    "", "", getDescription());
+                    "", "", getDescription() , true,false);
         } else {
             return this;
         }
@@ -67,10 +71,13 @@ public class VersionParameterDefinition extends
         if (r != null) {
             File localRepo = RepositoryConfiguration.get().getLocalRepoPath();
             Aether aether = new Aether(DESCRIPTOR.getRepos(), localRepo);
+            
             try {
                 List<Version> versions = aether.resolveVersions(groupid, artifactid);
                 for (Version version : versions) {
-                    versionStrings.add(version.toString());
+                	if((onlyReleasedVersions && !version.toString().endsWith("-SNAPSHOT")) || !onlyReleasedVersions){
+                		versionStrings.add(version.toString());
+                	}
                 }
             } catch (VersionRangeResolutionException ex) {
                 log.log(Level.SEVERE, "Could not determine versions", ex);
@@ -79,8 +86,10 @@ public class VersionParameterDefinition extends
                 // reverseorder to have the latest versions on top of the list
                 Collections.reverse(versionStrings);
                 // add the default parameters
-                versionStrings.add(0, "LATEST");
-                versionStrings.add(0, "RELEASE");
+                if(this.showDefaults) {
+	                versionStrings.add(0, "LATEST");
+	                versionStrings.add(0, "RELEASE");
+                }
             }
         }
         return versionStrings;
@@ -105,7 +114,19 @@ public class VersionParameterDefinition extends
     public String getPropertyName() {
         return propertyName;
     }
+    
+    @Exported
+    public boolean getShowDefaults() {
+        return showDefaults;
+    } 
 
+    @Exported
+    public boolean getOnlyReleasedVersions() {
+        return onlyReleasedVersions;
+    }     
+
+    
+    
     @Override
     public ParameterValue createValue(StaplerRequest req, JSONObject jo) {
         return new VersionParameterValue(groupid, artifactid, propertyName, jo.getString("value"));
@@ -288,3 +309,4 @@ public class VersionParameterDefinition extends
         return sb.toString();
     }
 }
+

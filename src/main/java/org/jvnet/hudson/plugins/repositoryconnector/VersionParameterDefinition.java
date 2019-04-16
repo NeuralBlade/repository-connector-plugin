@@ -36,15 +36,20 @@ public class VersionParameterDefinition extends
     private final String repoid;
     private final String artifactid;
     private final String propertyName;
+    private final boolean hideDefaults;
+    private final boolean hideSnapshots;  
 
     @DataBoundConstructor
     public VersionParameterDefinition(String repoid, String groupid,
-            String artifactid, String propertyName, String description) {
+            String artifactid, String propertyName, String description,
+            boolean hideDefaults, boolean hideSnapshots) {
         super((propertyName != null && !propertyName.isEmpty()) ? propertyName : groupid + "." + artifactid, description);
         this.repoid = repoid;
         this.groupid = groupid;
         this.artifactid = artifactid;
         this.propertyName = propertyName;
+        this.hideSnapshots = hideSnapshots;
+        this.hideDefaults = hideDefaults;
     }
 
     @Override
@@ -52,7 +57,7 @@ public class VersionParameterDefinition extends
         if (defaultValue instanceof StringParameterValue) {
             // TODO: StringParameterValue value = (StringParameterValue) defaultValue;
             return new VersionParameterDefinition(getRepoid(), "",
-                    "", "", getDescription());
+                    "", "", getDescription(), true,false);
         }
         return this;
     }
@@ -74,11 +79,13 @@ public class VersionParameterDefinition extends
 
                 // Add the choice items
                 for (Version version : versions) {
-                    items.add(new VersionLabel(version.toString(), version.toString()));
+                    if((hideSnapshots && !version.toString().endsWith("-SNAPSHOT")) || !hideSnapshots){
+                        items.add(new VersionLabel(version.toString(), version.toString()));
+                    }
                 }
 
                 // Add the default parameters as needed
-                if (!items.isEmpty()) {
+                if (!items.isEmpty() && !this.hideDefaults ) {
                     items.add(0, toDefaultVersion(versionsWithLatest.getLatest(), "LATEST"));
                     items.add(0, toDefaultVersion(versionsWithLatest.getRelease(), "RELEASE"));
                 }
@@ -123,6 +130,15 @@ public class VersionParameterDefinition extends
         return propertyName;
     }
 
+    @Exported
+    public boolean getHideDefaults() {
+        return hideDefaults;
+    }   
+
+    @Exported
+    public boolean getHideSnapshots() {
+        return hideSnapshots;
+    }    
     @Override
     public ParameterValue createValue(StaplerRequest req, JSONObject jo) {
         return new VersionParameterValue(groupid, artifactid, propertyName, jo.getString("value"));
